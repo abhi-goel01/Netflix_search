@@ -109,8 +109,8 @@ def read_json(js):
     except: imdb_dict['imdbRating'] = ''
     try: imdb_dict['imdbVotes'] = js['imdbVotes']
     except: imdb_dict['imdbVotes'] = ''
-    try: imdb_dict['imdbID'] = js['imdbID']
-    except: imdb_dict['imdbID'] = ''
+#    try: imdb_dict['imdbID'] = js['imdbID']
+#    except: imdb_dict['imdbID'] = ''
     try: imdb_dict['Type'] = js['Type']
     except: imdb_dict['Type'] = ''
     try: imdb_dict['DVD'] = js['DVD']
@@ -127,6 +127,7 @@ for i in missing_imdbdata:
     imdbid = i[0]
     # format the query string and make the API call for each imdb ID
     querystring['i'] = imdbid
+    print('imdb id', imdbid)
     response = requests.request("GET", url, headers=headers, params=querystring)
 
     if response.status_code == 200:
@@ -134,9 +135,29 @@ for i in missing_imdbdata:
         js = response.json()
         if js['Response'] == 'True':
             imdb_dict = read_json(js)
-            imdb_dict['imdb_data_found'] = 'yes'
-            table_imdb_found.append(imdb_dict)
-            found_by_api = found_by_api + 1
+            # Check if this IMDB record is a duplicate of another one, sample: tt1458596
+            if imdb_dict['Title'] == '#DUPE#':
+                querystring['i'] = js['imdbID']
+                response = requests.request("GET", url, headers=headers, params=querystring)
+                counter = counter + 1
+                js = response.json()
+                if js['Response'] == 'True':
+                    imdb_dict = read_json(js)
+                    imdb_dict['imdbID'] = imdbid
+                    imdb_dict['imdb_data_found'] = 'yes'
+                    table_imdb_found.append(imdb_dict)
+                    found_by_api = found_by_api + 1
+                else:
+                    js['Response'] == 'False'
+                    imdb_dict['imdbID'] = imdbid
+                    imdb_dict['imdb_data_found'] = 'no'
+                    table_imdb_not_found.append(imdb_dict)
+                    not_found_by_api = not_found_by_api + 1
+            else:
+                imdb_dict['imdbID'] = imdbid
+                imdb_dict['imdb_data_found'] = 'yes'
+                table_imdb_found.append(imdb_dict)
+                found_by_api = found_by_api + 1
         elif js['Response'] == 'False':
             imdb_dict['imdbID'] = imdbid
             imdb_dict['imdb_data_found'] = 'no'
