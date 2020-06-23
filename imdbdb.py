@@ -47,7 +47,7 @@ api_limit = int(response.headers['x-ratelimit-requests-limit'])
 gas = int(response.headers['x-ratelimit-requests-remaining'])
 
 # See if we have sufficient calls remaining from our quota to process this request, keeping a buffer of 20 calls
-if (gas-search_count_all) < 800:
+if (gas-search_count_all) < 20:
     print("\033[91m{}\033[00m".format('Not enough API balance remaining to look for all missing imdb data . . .'))
     print('API daily limit:',api_limit)
     print('API calls remaining for today:',gas)
@@ -60,7 +60,7 @@ if (gas-search_count_all) < 800:
             search_count_input = int(items_to_search)
             if search_count_input == 0: print('Enter a non zero number')
             elif search_count_input > search_count_all: print('Enter a number lower than the total API calls needed')
-            elif (gas - search_count_input) < 800: print('Not enough API balance, try again')
+            elif (gas - search_count_input) < 20: print('Not enough API balance, try again')
             else:
                 input_by_user_flag = 'yes'
                 break
@@ -75,6 +75,52 @@ else: search_limit = search_count_all
 print('Looking for '+ str(search_limit) + ' missing IMDB ID(s). . . . ')
 print('Remaining API gas: ',gas)
 
+def read_json(js):
+    imdb_dict = {}
+    try: imdb_dict['Title'] = js['Title']
+    except: imdb_dict['Title'] = ''
+    try: imdb_dict['Year'] = js['Year']
+    except: imdb_dict['Year'] = ''
+    try: imdb_dict['Rated'] = js['Rated']
+    except: imdb_dict['Rated'] = ''
+    try: imdb_dict['Released'] = js['Released']
+    except: imdb_dict['Released'] = ''
+    try: imdb_dict['Runtime'] = js['Runtime']
+    except: imdb_dict['Runtime'] = ''
+    try: imdb_dict['Genre'] = js['Genre']
+    except: imdb_dict['Genre'] = ''
+    try: imdb_dict['Director'] = js['Director']
+    except: imdb_dict['Director'] = ''
+    try: imdb_dict['Writer'] = js['Writer']
+    except: imdb_dict['Writer'] = ''
+    try: imdb_dict['Actors'] = js['Actors']
+    except: imdb_dict['Actors'] = ''
+    try: imdb_dict['Plot'] = js['Plot']
+    except: imdb_dict['Plot'] = ''
+    try: imdb_dict['Language'] = js['Language']
+    except: imdb_dict['Language'] = ''
+    try: imdb_dict['Country'] = js['Country']
+    except: imdb_dict['Country'] = ''
+    try: imdb_dict['Awards'] = js['Awards']
+    except: imdb_dict['Awards'] = ''
+    try: imdb_dict['Poster'] = js['Poster']
+    except: imdb_dict['Poster'] = ''
+    try: imdb_dict['imdbRating'] = js['imdbRating']
+    except: imdb_dict['imdbRating'] = ''
+    try: imdb_dict['imdbVotes'] = js['imdbVotes']
+    except: imdb_dict['imdbVotes'] = ''
+    try: imdb_dict['imdbID'] = js['imdbID']
+    except: imdb_dict['imdbID'] = ''
+    try: imdb_dict['Type'] = js['Type']
+    except: imdb_dict['Type'] = ''
+    try: imdb_dict['DVD'] = js['DVD']
+    except: imdb_dict['DVD'] = ''
+    try: imdb_dict['BoxOffice'] = js['BoxOffice']
+    except: imdb_dict['BoxOffice'] = ''
+    try: imdb_dict['Production'] = js['Production']
+    except: imdb_dict['Production'] = ''
+    return imdb_dict
+
 for i in missing_imdbdata:
     counter = counter + 1
     if counter > search_limit: break
@@ -87,7 +133,7 @@ for i in missing_imdbdata:
         imdb_dict = {}
         js = response.json()
         if js['Response'] == 'True':
-            imdb_dict = js
+            imdb_dict = read_json(js)
             imdb_dict['imdb_data_found'] = 'yes'
             table_imdb_found.append(imdb_dict)
             found_by_api = found_by_api + 1
